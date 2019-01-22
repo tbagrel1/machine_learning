@@ -137,7 +137,7 @@
     \item[H] Homogénéité : les groupes doivent avoir des tailles pas trop différentes (pour éviter une partition en $1$ et $10^9$ éléments)
     \item[D] Distinction : les groupes ne doivent pas être trop proches les uns des autres pour pouvoir les distinguer
     \item[S] Stabilité : voir \tt{final\_eps}
-    \item[P] Proximité : les éléments d'un cluster doivent être le plus proche possible les uns des autres
+    \item[P] Proximité : les éléments d'un cluster doivent être le plus proche possible de leur centroid
   \end{itemize}
   \end{block}
 \end{frame}
@@ -148,9 +148,9 @@
 
   \begin{block}{Comportement idéal attendu}
     \begin{itemize}
-      \item[H] grand quand les longueurs sont proches
+      \item[H] grand quand les tailles de clusters sont proches
       \item[D] 1 dès que les groupes sont assez éloignés, 0 sinon
-      \item[S] inv. de \tt{final\_eps}
+      \item[S] ``inverse'' de \tt{final\_eps}
       \item[P] grand quand les points sont proches de leur centroid
     \end{itemize}
   \end{block}
@@ -187,6 +187,8 @@
 
   \begin{alertblock}{Distance}
     La question la plus délicate reste celle de la distance, sans introduire de biais !
+
+    On utilise donc souvent la distance euclidienne, réputée ``neutre''.
   \end{alertblock}
 
 \end{frame}
