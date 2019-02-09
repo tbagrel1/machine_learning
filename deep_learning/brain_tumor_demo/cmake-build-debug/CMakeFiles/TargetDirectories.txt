@@ -1,3 +1,0 @@
-/home/thomas/Drive/Thomas/cours/cours_2018_2019/machine_learning/deep_learning/brain_tumor_demo/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/thomas/Drive/Thomas/cours/cours_2018_2019/machine_learning/deep_learning/brain_tumor_demo/cmake-build-debug/CMakeFiles/brain_tumor_demo.dir
-/home/thomas/Drive/Thomas/cours/cours_2018_2019/machine_learning/deep_learning/brain_tumor_demo/cmake-build-debug/CMakeFiles/edit_cache.dir
