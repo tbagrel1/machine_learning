@@ -1,12 +1,15 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "image_utils.h"
 
 int x = 0;
 int y = 0;
 double d = 0.0;
+
+char const pgm_header[] = "P5\n# CREATOR: GIMP PNM Filter Version 1.1\n96 128\n255\n";
 
 void image__swap(Image *p_image_1, Image *p_image_2) {
     Image temp = *p_image_2;
@@ -38,6 +41,13 @@ void image__to_path(Image image, Path path) {
     FILE *image_file = fopen(path, "w");
     fwrite(image, sizeof(pixel), N, image_file);
     fclose(image_file);
+}
+
+void image__to_pgm_to_path(Image image, Path path) {
+    FILE *pgm_file = fopen(path, "w");
+    fwrite(pgm_header, sizeof(char), strlen(pgm_header), pgm_file);
+    fwrite(image, sizeof(pixel), N, pgm_file);
+    fclose(pgm_file);
 }
 
 void _shrink_topleft(Image *p_image, Image *p_temp, double ratio_w, double ratio_h) {

@@ -1,0 +1,5 @@
+.idea
+**/.directory
+target
+data
+nn_saves

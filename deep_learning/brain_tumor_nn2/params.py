@@ -1,0 +1,11 @@
+# -*- coding: utf-8 -*-
+
+WIDTH = 96
+HEIGHT = 128
+CHANNELS = 1
+BATCH_SIZE = 50
+EPOCH_MAX_SIZE = 10000
+INPUT_SHAPE = (WIDTH, HEIGHT, CHANNELS)
+CLASSES_NB = 4
+DEFAULT_SAVE_PATH = "nn_saves/cnn_keras.nn"
+

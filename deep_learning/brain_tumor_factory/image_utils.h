@@ -8,6 +8,7 @@
 #define WIDTH 96
 #define HEIGHT 128
 #define N (WIDTH * HEIGHT)
+extern char const pgm_header[];
 
 typedef unsigned char uchar;
 typedef uchar pixel;
@@ -50,6 +51,7 @@ void image__swap(Image *p_image_1, Image *p_image_2);
 void image__delete(Image image);
 void image__from_path(Image image, Path path);
 void image__to_path(Image image, Path path);
+void image__to_pgm_to_path(Image image, Path path);
 void move(Image *p_image, Image *p_temp, int delta_x, int delta_y);
 void shrink(Image *p_image, Image *p_temp, double ratio_w, double ratio_h);
 void ghost_blur(Image *p_image, Image *p_temp, int delta_x, int delta_y, double ghost_ratio);

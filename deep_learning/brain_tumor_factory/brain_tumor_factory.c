@@ -7,7 +7,6 @@
 #include "image_utils.h"
 
 #define PATH_SIZE 256
-#define CMD_SIZE 1024
 
 void tumor(Image *p_image, Image *p_temp, int x_c, int y_c, int r_c_area, int r_min, int r_max, int n_min, int n_max, int delta_min, int delta_max) {
     int n = int_rd(n_min, n_max);
@@ -31,6 +30,7 @@ void tumor(Image *p_image, Image *p_temp, int x_c, int y_c, int r_c_area, int r_
     image__delete(temp);
 }
 
+/* Hard/realist settings */
 void small_tumor(Image *p_image, Image *p_temp, int x_c, int y_c) {
     tumor(p_image, p_temp, x_c, y_c, 3, 2, 3, 1, 3, 30, 60);
 }
@@ -42,6 +42,20 @@ void medium_tumor(Image *p_image, Image *p_temp, int x_c, int y_c) {
 void big_tumor(Image *p_image, Image *p_temp, int x_c, int y_c) {
     tumor(p_image, p_temp, x_c, y_c, 10, 6, 10, 3, 5, 15, 45);
 }
+
+
+/* Easy settings */
+/*void small_tumor(Image *p_image, Image *p_temp, int x_c, int y_c) {
+    tumor(p_image, p_temp, x_c, y_c, 3, 2, 4, 1, 3, 90, 130);
+}
+
+void medium_tumor(Image *p_image, Image *p_temp, int x_c, int y_c) {
+    tumor(p_image, p_temp, x_c, y_c, 7, 6, 8, 2, 3, 80, 100);
+}
+
+void big_tumor(Image *p_image, Image *p_temp, int x_c, int y_c) {
+    tumor(p_image, p_temp, x_c, y_c, 20, 12, 17, 3, 5, 60, 80);
+}*/
 
 void brain_pos_rd(int *p_x, int *p_y) {
     do {
@@ -65,7 +79,7 @@ void case_a(Image *p_image, Image *p_temp) {
 }
 
 void case_b(Image *p_image, Image *p_temp) {
-    int medium_nb = int_rd(2, 5);
+    int medium_nb = int_rd(4, 8);
     int small_nb = int_rd(0, 3);
     int x, y;
     for (int i = 0; i < medium_nb; ++i) {
@@ -79,7 +93,7 @@ void case_b(Image *p_image, Image *p_temp) {
 }
 
 void case_c(Image *p_image, Image *p_temp) {
-    int small_nb = int_rd(10, 18);
+    int small_nb = int_rd(20, 48);
     for (int i = 0; i < small_nb; ++i) {
         brain_pos_rd(&x, &y);
         small_tumor(p_image, p_temp, x, y);
@@ -93,7 +107,7 @@ bool alter_full(Image *p_image, Image *p_temp) {
     shrink(p_image, p_temp, rdn(0.75, 1.0), rdn(0.75, 1.0));
     move(p_image, p_temp, int_rd(-8, 8), int_rd(-10, 10));
     bool blurred = false;
-    if (rd() < 0.03) {
+    if (rd() < 0.001) {
         ghost_blur(p_image, p_temp, int_rd(2, 4), int_rd(3, 5), 0.2 + 0.2 * rd());
         blurred = true;
     }
@@ -105,32 +119,30 @@ bool alter_full(Image *p_image, Image *p_temp) {
 
 char type_rd() {
     double v = rd();
-    if (v < 0.05) {
+    if (v < 0.25) {
         return 'a';
     }
-    if (v < 0.25) {
+    if (v < 0.50) {
         return 'b';
     }
-    if (v < 0.50) {
+    if (v < 0.75) {
         return 'c';
     }
     return 'z';
 }
 
-void create_batches(int batch_nb, int batch_size, bool generate_pgm) {
+void create_batches(int sample_nb) {
     Image image = image__new();
     Image temp = image__new();
 
     char gen_id[PATH_SIZE];
     char out_csv_path[PATH_SIZE];
     char out_gen_dir[PATH_SIZE];
-    char out_batch_dir[PATH_SIZE];
+    char out_case_a_dir[PATH_SIZE];
+    char out_case_b_dir[PATH_SIZE];
+    char out_case_c_dir[PATH_SIZE];
+    char out_case_z_dir[PATH_SIZE];
     char out_brain_path[PATH_SIZE];
-    char out_pgm_gen_dir[PATH_SIZE];
-    char out_pgm_batch_dir[PATH_SIZE];
-    char out_pgm_brain_path[PATH_SIZE];
-
-    char pgm_conversion_cmd[CMD_SIZE];
 
     bool blurred;
     char type;
@@ -144,71 +156,63 @@ void create_batches(int batch_nb, int batch_size, bool generate_pgm) {
         tm.tm_hour, tm.tm_min, tm.tm_sec
     );
 
-    // Generate gen_dir(s)
+    // Generate gen dir
     sprintf(out_gen_dir, "../output/%s", gen_id);
-    sprintf(out_pgm_gen_dir, "../output_pgm/%s", gen_id);
-    // Create gen_dir(s)
+    // Create gen dir
     mkdir(out_gen_dir, 0777);
-    if (generate_pgm) mkdir(out_pgm_gen_dir, 0777);
+
+    // Generate case dirs
+    sprintf(out_case_a_dir, "%s/a", out_gen_dir);
+    sprintf(out_case_b_dir, "%s/b", out_gen_dir);
+    sprintf(out_case_c_dir, "%s/c", out_gen_dir);
+    sprintf(out_case_z_dir, "%s/z", out_gen_dir);
+    // Create case dirs
+    mkdir(out_case_a_dir, 0777);
+    mkdir(out_case_b_dir, 0777);
+    mkdir(out_case_c_dir, 0777);
+    mkdir(out_case_z_dir, 0777);
 
     // Generate and open csv records file
     sprintf(out_csv_path, "%s.csv", out_gen_dir);
     FILE *out_csv_file = fopen(out_csv_path, "w");
 
-    for (int batch_id = 0; batch_id < batch_nb; ++batch_id) {
+    for (int sample_id = 0; sample_id < sample_nb; ++sample_id) {
 
-        // Generate batch_dir(s)
-        sprintf(out_batch_dir, "%s/%06d", out_gen_dir, batch_id);
-        sprintf(out_pgm_batch_dir, "%s/%06d", out_pgm_gen_dir, batch_id);
-        // Create batch_dir(s)
-        mkdir(out_batch_dir, 0777);
-        if (generate_pgm) mkdir(out_pgm_batch_dir, 0777);
+        // Read base image
+        image__from_path(image, "../resources/brain_base.rbi");
 
-        for (int sample_id = 0; sample_id < batch_size; ++sample_id) {
-
-            // Generate brain_path(s)
-            sprintf(out_brain_path, "%s/%06d", out_batch_dir, sample_id);
-            sprintf(out_pgm_brain_path, "%s/%06d.pgm", out_pgm_batch_dir, sample_id);
-            // Generate PGM conversion command
-            sprintf(pgm_conversion_cmd, "cat ../resources/header.pgm %s > %s", out_brain_path, out_pgm_brain_path);
-
-            // Read base image
-            image__from_path(image, "../resources/brain_base.rbi");
-
-            // Choose a case and alter the image
-            type = type_rd();
-            switch (type) {
-                case 'a':
-                    case_a(&image, &temp);
-                    break;
-                case 'b':
-                    case_b(&image, &temp);
-                    break;
-                case 'c':
-                    case_c(&image, &temp);
-                    break;
-                default:  // 'z'
-                    case_z(&image, &temp);
-                    break;
-            }
-            blurred = alter_full(&image, &temp);
-
-            // Write output image
-            image__to_path(image, out_brain_path);
-
-            // Write the corresponding record in the csv file
-            fprintf(
-                out_csv_file, "%s%06d%06d,%s,%06d,%06d,%c,%d\n",
-                gen_id, batch_id, sample_id,
-                gen_id,
-                batch_id,
-                sample_id,
-                type,
-                blurred ? 1 : 0
-            );
-
-            if (generate_pgm) system(pgm_conversion_cmd);
+        // Choose a case and alter the image
+        type = type_rd();
+        // Generate brain path
+        sprintf(out_brain_path, "%s/%c/%06d.pgm", out_gen_dir, type, sample_id);
+        // Alter the image depending on the type
+        switch (type) {
+            case 'a':
+                case_a(&image, &temp);
+                break;
+            case 'b':
+                case_b(&image, &temp);
+                break;
+            case 'c':
+                case_c(&image, &temp);
+                break;
+            default:  // 'z'
+                case_z(&image, &temp);
+                break;
         }
+        blurred = alter_full(&image, &temp);
+
+        // Write output image
+        image__to_pgm_to_path(image, out_brain_path);
+
+        // Write the corresponding record in the csv file
+        fprintf(
+            out_csv_file, "%s%06d,%06d,%c,%d\n",
+            gen_id, sample_id,
+            sample_id,
+            type,
+            blurred ? 1 : 0
+        );
     }
 
     fclose(out_csv_file);
@@ -228,45 +232,32 @@ bool parse_long(char *str, long *p_res) {
     return true;
 }
 
-bool extract_bool(char *str) {
-    if (str[0] == '1' || strcmp(str, "true") == 0) {
-        return true;
-    }
-    return false;
-}
-
 int main(int argc, char **argv) {
     srand(time(NULL));
 
     // Args validation
 
-    if (argc != 4) {
-        puts("Invalid number of args. USAGE:\n\n"
-             "brain_tumor_factory  BATCH_NB  BATCH_SIZE  GENERATE_PGM\n\n"
-             "    BATCH_NB:       number of batches  (<= 1 000 000)\n"
-             "    BATCH_SIZE:     number of samples in each batch  (<= 1 000 000)\n"
-             "    GENERATE_PGM:   should we create PGM copy of each binary image for you? (0/false | 1/true)\n");
+    if (argc != 2) {
+        puts(
+            "Invalid number of args. USAGE:\n\n"
+            "brain_tumor_factory  SAMPLE_NB\n\n"
+            "    SAMPLE_NB:      number of samples  (<= 1 000 000)\n"
+        );
+
+        return -1;
+    }
+
+    long l_sample_nb;
+    bool valid_sample_nb = parse_long(argv[1], &l_sample_nb);
+    if (!valid_sample_nb || l_sample_nb > 1000000) {
+        puts("Invalid SAMPLE_NB. Try again.\n");
 
         return 1;
     }
 
-    long l_batch_nb;
-    bool valid_batch_nb = parse_long(argv[1], &l_batch_nb);
-    if (!valid_batch_nb || l_batch_nb > 1000000) {
-        puts("Invalid BATCH_NB. Try again.\n");
-    }
-
-    long l_batch_size;
-    bool valid_batch_size = parse_long(argv[2], &l_batch_size);
-    if (!valid_batch_size || l_batch_size > 1000000) {
-        puts("Invalid BATCH_SIZE. Try again.\n");
-    }
-
-    bool generate_pgm = extract_bool(argv[3]);
-
     // Processing
 
-    create_batches((int) (l_batch_nb), (int) (l_batch_size), generate_pgm);
+    create_batches((int) (l_sample_nb));
 
     return 0;
 }
