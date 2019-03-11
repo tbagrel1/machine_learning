@@ -1,7 +1,15 @@
 \documentclass[]{beamer}
+% https://github.com/tbagrel1/latex_resources
 \usepackage{tbagrelbeamer}
 \usepackage{beamerstylebluesky}
 \usepackage{pgfplots}
+
+\newcommand{\btf}{\tt{brain\_tumor\_factory}}
+\newcommand{\btn}{\tt{brain\_tumor\_nn}}
+\newcommand{\btnt}{\tt{brain\_tumor\_nn2}}
+\newcommand{\ca}[1]{\tt{\alert{#1}}}
+\newcommand{\icdc}[1]{\alert{$\pm{}[$}#1\alert{$]$}}
+\usetikzlibrary{fadings}
 
 \begin{document}
 
@@ -217,22 +225,373 @@
   \end{center}
 \end{frame}
 
-% medical images
-% why not ?
-% creation
-% brain_tumor
-% base image
-% C program
-% image generation
-% alter
-% types
-% easy / hard
-% guess it
+\begin{frame}
+  \frametitle{CNN Components}
+  \framesubtitle{CNN schema for multiclass}
+  \begin{center}
+    \includegraphics[width=\linewidth]{resources/cnn_schema}
+    \captionof{figure}{CNN architecture}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Medical imaging}
+  \framesubtitle{Availability}
+  \begin{block}{The issue}
+    There are medical image datasets available online, but
+    \begin{itemize}
+      \item \alert{High resolution}
+      \item Difficult to find the differencies or the good class for an \alert{untrained eye}
+      \item File format and dataset organisation is not always \alert{normalized}
+    \end{itemize}
+  \end{block}
+  \begin{exampleblock}{Examples}
+    \begin{itemize}
+      \item \alert{List of public datasets}: \url{bit.ly/2EOziVp}, \url{bit.ly/2u0Da0Q}
+      \item \alert{Datasets}: \url{bit.ly/2F34jqb} (cancer cells), \url{bit.ly/2u99w9L} (neuroimaging), \url{bit.ly/2cGnNQL} (Alzheimer)\ldots{}
+    \end{itemize}
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Medical imaging}
+  \framesubtitle{What to do so?}
+  \begin{block}{Requirements}
+    \begin{itemize}
+      \item Large dataset
+      \item Low-res images (max. 256 x 256)
+      \item Something which looks like medical images
+    \end{itemize}
+  \end{block}
+  \begin{exampleblock}{Idea}
+    Generate \alert{brain 2D images} and add random ``tumors'' on them
+  \end{exampleblock}
+  \begin{center}
+    \includegraphics[width=1.8cm]{resources/brain_base}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btf}
+  \framesubtitle{Let's get our hands dirty!}
+  \begin{block}{How to generate?}
+    Home-made C program: \alert{\btf}
+    \begin{itemize}
+      \item take a \alert{single} base image
+      \item add tumor(s) randomly depending on the chosen scenario
+      \item alter the resulting image, to ensure that each output image is a bit unique
+    \end{itemize}
+    Program size: $\simeq$ 500 LOC
+
+    Output: $\simeq$ 1000 images/s
+
+    Image size: \alert{96 x 128 x 1} (grayscale)
+  \end{block}
+\end{frame}
+
+\tikzfading[name=fade out, inner color=transparent!0,
+  outer color=transparent!100]
+
+\begin{frame}[fragile]
+  \frametitle{\btf}
+  \framesubtitle{Creating tumors: \tt{tumor} function}
+  \begin{block}{Instructions}
+    Take a cirle of radius $R_{\text{area}}$, and put $n \in \itg{n_{\text{min}}, n_{\text{max}}}$ ``soft discs'' of radius $r_i \in [r_{\text{min}}, r_{\text{max}}]$ with their center placed randomly inside the chosen area
+  \end{block}
+  \begin{center}
+    \begin{tikzpicture}[scale=0.5]
+      \draw (0, 0) circle (4cm);
+      \fill[path fading=fade out, color=alertTextColor] (0.3, 0.4) circle (3cm);
+      \fill[path fading=fade out, color=alertTextColor] (2.3, -1.9) circle (1.75cm);
+      \fill[path fading=fade out, color=alertTextColor] (-1.2, 2.54) circle (2.22cm);
+      \fill[path fading=fade out, color=alertTextColor] (-0.98, -1.44) circle (1.48cm);
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btf}
+  \framesubtitle{Altering the resulting image: \tt{alter\_full} function}
+  \begin{block}{Alterations}
+    \begin{itemize}
+      \item \ca{shrink}: shrink the image on x-axis and/or y-axis
+      \item \ca{move}: shift the image on x-axis and/or y-axis
+      \item (\ca{ghost\_blur~\tss{0.1\%}}): simulate motion blur on a shot
+      \item \ca{alter\_contrast}: \icdc{brightness range}, with custom ``brightness center''
+      \item \ca{alter\_shade}: global flat \icdc{brightness}
+      \item \ca{alter\_rdc}: per-pixel flat random \icdc{brightness}
+    \end{itemize}
+  \end{block}
+
+  For each image, alterations parameters are random numbers taken from a \alert{uniform} or \alert{normal} distribution
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btf}
+  \framesubtitle{Base image}
+  \begin{center}
+    \includegraphics[width=5.5cm]{resources/brain_base}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btf}
+  \framesubtitle{Altered images}
+  \begin{minipage}{\linewidth}
+    \begin{center}
+      \includegraphics[width=2.55cm]{resources/z1}
+      \includegraphics[width=2.55cm]{resources/z2}
+      \includegraphics[width=2.55cm]{resources/z3}
+      \includegraphics[width=2.55cm]{resources/z4}
+    \end{center}
+  \end{minipage}
+  \begin{minipage}{\linewidth}
+    \begin{center}
+      \includegraphics[width=2.55cm]{resources/z5}
+      \includegraphics[width=2.55cm]{resources/z6}
+      \includegraphics[width=2.55cm]{resources/z7}
+      \includegraphics[width=2.55cm]{resources/z8}
+    \end{center}
+  \end{minipage}
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btf}
+  \framesubtitle{Syndrome A}
+  \begin{block}{Description}
+    \begin{itemize}
+      \item \alert{$\itg{1, 2}$} big tumor(s)
+      \item \alert{$\itg{0, 2}$} medium tumor(s)
+    \end{itemize}
+  \end{block}
+  \begin{center}
+    \includegraphics[width=3.2cm]{resources/a1e}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btf}
+  \framesubtitle{Syndrome B}
+  \begin{block}{Description}
+    \begin{itemize}
+      \item \alert{$\itg{4, 8}$} medium tumor(s)
+      \item \alert{$\itg{0, 3}$} small/tiny tumor(s)
+    \end{itemize}
+  \end{block}
+  \begin{center}
+    \includegraphics[width=3.2cm]{resources/b1e}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btf}
+  \framesubtitle{Syndrome C}
+  \begin{block}{Description}
+    \begin{itemize}
+      \item only \alert{$\itg{20, 48}$} small/tiny tumor(s)
+    \end{itemize}
+  \end{block}
+  \begin{center}
+    \includegraphics[width=3.2cm]{resources/c1e}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btf}
+  \framesubtitle{Guess game: EASY mode}
+  \begin{minipage}{\linewidth}
+    \begin{center}
+      \includegraphics[width=2.55cm]{resources/b2e}
+      \includegraphics[width=2.55cm]{resources/z1e}
+      \includegraphics[width=2.55cm]{resources/a2e}
+      \includegraphics[width=2.55cm]{resources/z3e}
+    \end{center}
+  \end{minipage}
+  \begin{minipage}{\linewidth}
+    \begin{center}
+      \includegraphics[width=2.55cm]{resources/b4e}
+      \includegraphics[width=2.55cm]{resources/c2e}
+      \includegraphics[width=2.55cm]{resources/c3e}
+      \includegraphics[width=2.55cm]{resources/a4e}
+    \end{center}
+  \end{minipage}
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btf}
+  \framesubtitle{Guess game: HARD mode}
+  \begin{block}{Observation}
+    It turns out that it's kinda easy to find the correct syndrome type, isn't it?
+
+    Let's try the \alert{HARD} mode then (more realistic) \includegraphics[height=12pt]{resources/devil}
+  \end{block}
+
+  \begin{exampleblock}{HARD mode specifications}
+    \begin{itemize}
+      \item Tumor opacity \alert{greatly} reduced
+      \item Tumor size reduced a bit
+    \end{itemize}
+  \end{exampleblock}
+
+  The \alert{base image} will always be placed on the \alert{LEFT} of the image whose type must be determined
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btf}
+  \framesubtitle{Guess game: HARD mode}
+  \begin{minipage}{\linewidth}
+    \begin{center}
+      \includegraphics[width=4.2cm]{resources/brain_base}
+      \includegraphics[width=4.2cm]{resources/c2}
+    \end{center}
+  \end{minipage}
+  \pause
+  \begin{block}{Answer}
+    Syndrome C
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btf}
+  \framesubtitle{Guess game: HARD mode}
+  \begin{minipage}{\linewidth}
+    \begin{center}
+      \includegraphics[width=4.2cm]{resources/brain_base}
+      \includegraphics[width=4.2cm]{resources/a2}
+    \end{center}
+  \end{minipage}
+  \pause
+  \begin{block}{Answer}
+    Syndrome A
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btf}
+  \framesubtitle{Guess game: HARD mode}
+  \begin{minipage}{\linewidth}
+    \begin{center}
+      \includegraphics[width=4.2cm]{resources/brain_base}
+      \includegraphics[width=4.2cm]{resources/z3}
+    \end{center}
+  \end{minipage}
+  \pause
+  \begin{block}{Answer}
+    Z (healthy patient)
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btf}
+  \framesubtitle{Guess game: HARD mode}
+  \begin{minipage}{\linewidth}
+    \begin{center}
+      \includegraphics[width=4.2cm]{resources/brain_base}
+      \includegraphics[width=4.2cm]{resources/b2}
+    \end{center}
+  \end{minipage}
+  \pause
+  \begin{block}{Answer}
+    Syndrome B
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btf}
+  \framesubtitle{Guess game: HARD mode}
+  \begin{minipage}{\linewidth}
+    \begin{center}
+      \includegraphics[width=4.2cm]{resources/brain_base}
+      \includegraphics[width=4.2cm]{resources/z4}
+    \end{center}
+  \end{minipage}
+  \pause
+  \begin{block}{Answer}
+    Z (healthy patient)
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btf}
+  \framesubtitle{Guess game: HARD mode}
+  \begin{minipage}{\linewidth}
+    \begin{center}
+      \includegraphics[width=4.2cm]{resources/brain_base}
+      \includegraphics[width=4.2cm]{resources/c3}
+    \end{center}
+  \end{minipage}
+  \pause
+  \begin{block}{Answer}
+    Syndrome C
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btf}
+  \framesubtitle{Guess game: HARD mode}
+  \begin{block}{Observation}
+    Not so easy this time? \includegraphics[height=12pt]{resources/devil}
+  \end{block}
+
+  \vfill
+
+  \begin{center}
+    \Large
+    Let's see what \alert{deep learning} can do
+  \end{center}
+
+  \vfill
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btn}
+  \framesubtitle{Description}
+  \begin{block}{Framework}
+    \begin{itemize}
+      \item DL4j / ScalNet (Scala)
+      \item not really fast (afterwards)
+      \item Keras-like API
+    \end{itemize}
+  \end{block}
+  \begin{exampleblock}{Architecture}
+    \begin{itemize}
+      \item 3 \tt{Conv2D} (\tt{MaxPooling2D} inbetween): 16 64 256
+      \item \tt{Dense} 1024
+      \item GD (BGD) with Nesterov Momentum
+      \item (adapted from MNIST NN examples)
+    \end{itemize}
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btn}
+  \framesubtitle{Description}
+  \begin{block}{Issue (after 2 hours learning)}
+    \begin{itemize}
+      \item Accuracy blocked at 0.25
+      \item loss wasn't decreasing
+      \item a \alert{single type} predicted everytime
+    \end{itemize}
+  \end{block}
+  \begin{exampleblock}{Why (afterwards)}
+    \begin{itemize}
+      \item I didn't wait long enough
+      \item 3 Conv layer NN + slow framework didn't help much neither
+      \item in addition, learning on mobile CPU (i7) is still slow
+      \item (but afterwards) architecture wasn't really the issue
+    \end{itemize}
+  \end{exampleblock}
+\end{frame}
+
+% brain_tumor_nn2
 % what can be achieved
 % overfitting
 % regularization
 % underfitting
+% easy then hard, why it seemed to be not working at the beginning
 % evolutions of the nn
+
+% image virtual augmentation not used here
 
 % hardware & software
 % dl4j
@@ -241,5 +600,10 @@
 % futur equipment ?
 
 % credits
+
+\begin{frame}
+  \frametitle{}
+  \framesubtitle{}
+\end{frame}
 
 \end{document}
