@@ -1,2 +1,0 @@
-PyYaml==3.13
-ipython==5.7.0

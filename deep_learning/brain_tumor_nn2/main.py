@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import click
-from tensorflow.keras import *
 from os import path
-import matplotlib.pyplot as plt
+import time
+import tensorflow as tf
+from tensorflow.keras import *
+from tensorflow.keras.backend import set_session
 
-from data import DataLabelsGenerator, get_data_labels
+from data import DataLabelsGenerator
 from model import get_model
-from params import *
 from callbacks import *
 
 @click.command()
@@ -16,6 +17,13 @@ from callbacks import *
 @click.option("-b", "--save-best-only", is_flag=True, default=False)
 @click.option("-n", "--epoch-nb", type=int, default=1)
 def main(from_path, to_path, save_best_only, epoch_nb):
+
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True
+    config.gpu_options.per_process_gpu_memory_fraction = 0.65
+    sess = tf.Session(config=config)
+    set_session(sess)
+
     if from_path is None:
         model = get_model()
         model.compile(
@@ -25,14 +33,22 @@ def main(from_path, to_path, save_best_only, epoch_nb):
             metrics=["accuracy"]
         )
     else:
-        print("### LOADED YAY! ###")
         model = models.load_model(from_path)
 
     history = get_history()
     model_saver = get_model_saver(to_path, save_best_only)
-    callbacks = [
+
+
+    # http://fizzylogic.nl/2017/05/08/monitor-progress-of-your-keras-based-neural-network-using-tensorboard/
+
+    tensorboard = callbacks.TensorBoard(log_dir="logs/{}_{}".format(
+        path.splitext(path.basename(path.basename(to_path)))[0],
+        time.strftime("%y%m%d_%H%M%S", time.localtime())
+    ))
+    _callbacks = [
         history,
-        model_saver
+        model_saver,
+        tensorboard
     ]
 
     train_generator = DataLabelsGenerator("data/train_data_hard", BATCH_SIZE)
@@ -46,20 +62,9 @@ def main(from_path, to_path, save_best_only, epoch_nb):
         verbose=1,
         validation_data=test_generator,
         validation_steps=len(test_generator),
-        use_multiprocessing=False,
-        callbacks=callbacks
+        use_multiprocessing=True,
+        callbacks=_callbacks
     )
-
-    # for i in range(1, epoch_nb + 1):
-    #     print("\n%%%%% DOING EPOCH {} %%%%%\n".format(i))
-    #     model.fit(
-    #         *get_data_labels("data/train_data_hard"),
-    #         batch_size=BATCH_SIZE,
-    #         epochs=1,
-    #         verbose=1,
-    #         validation_data=get_data_labels("data/test_data_hard", limit=10000),
-    #         callbacks=[model_saver]
-    #     )
     print("\n\n--- [END TRAINING]\n\n")
 
 if __name__ == "__main__":

@@ -575,7 +575,7 @@
   \end{block}
   \begin{exampleblock}{Why (afterwards)}
     \begin{itemize}
-      \item I didn't wait long enough
+      \item I didn't wait long enough (on hard samples)
       \item 3 Conv layer NN + slow framework didn't help much neither
       \item in addition, learning on mobile CPU (i7) is still slow
       \item (but afterwards) architecture wasn't really the issue
@@ -583,27 +583,313 @@
   \end{exampleblock}
 \end{frame}
 
-% brain_tumor_nn2
-% what can be achieved
-% overfitting
-% regularization
-% underfitting
-% easy then hard, why it seemed to be not working at the beginning
-% evolutions of the nn
+\begin{frame}
+  \frametitle{\btnt}
+  \framesubtitle{Description}
 
-% image virtual augmentation not used here
+  \begin{block}{Framework}
+    \begin{itemize}
+      \item Tensorflow with Keras
+      \item Learning on CPU and then on GPU
+    \end{itemize}
+  \end{block}
 
-% hardware & software
-% dl4j
-% cpu vs gpu
-% tensorflow
-% futur equipment ?
+  \begin{exampleblock}{Architecture}
+    \begin{itemize}
+      \item Simplified architecture first: only 2 \tt{Conv2D} layers
+      \item Learning on \alert{EASY} images first
+    \end{itemize}
+  \end{exampleblock}
 
-% credits
+  Dataset: 100~000 L / 10~000 T \alert{EASY} images
+
+  Very good results: \alert{97-99 \% acc} after 4 epochs (CPU)
+\end{frame}
 
 \begin{frame}
-  \frametitle{}
-  \framesubtitle{}
+  \frametitle{\btnt}
+  \framesubtitle{Training on HARD dataset (v1)}
+
+  \begin{exampleblock}{Architecture (v1)}
+    2 \tt{Conv2D} (64 128) + 1 \tt{Dense} (1024)
+  \end{exampleblock}
+
+  Dataset: 100~000 L / 10~000 T \alert{HARD} images
+
+  Learning: \alert{GPU} now, about 30x faster ($\simeq$ 1 min/epoch)
+
+  Encouraging results: over \alert{80 \% acc} after an hour, but \alert{overfitting} at the end: about \alert{100 \% acc} on train data
+
+  \medskip
+
+  Final score on test data: \alert{90 \% acc}
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btnt}
+  \framesubtitle{Training on HARD dataset (v2)}
+
+  Smaller network, for faster convergence, and to reduce overfitting
+
+  \begin{exampleblock}{Architecture (v2)}
+    2 \tt{Conv2D} (32 64) + 1 \tt{Dense} (512)
+  \end{exampleblock}
+
+  Good results: more than \alert{84 \% acc} after a few epochs, but still \alert{overfitting} at the end: about \alert{100 \% acc} on train data
+
+  \medskip
+
+  Final score on test data: \alert{90 \% acc}
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btnt}
+  \framesubtitle{Training on HARD dataset (v3)}
+
+  Even smaller network, in order to reduce overfitting again
+
+  \begin{exampleblock}{Architecture (v3)}
+    2 \tt{Conv2D} (16 32) + 1 \tt{Dense} (256)
+  \end{exampleblock}
+
+  Good results: more than \alert{86 \% acc} after a few epochs, but still \alert{overfitting}: about \alert{100 \% acc} on train data
+
+  \medskip
+
+  Final score on test data: \alert{90 \% acc}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Issues}
+  \framesubtitle{Overfitting}
+
+  \begin{block}{Description}
+    Overfitting: when the model learns more the specificities of the train dataset samples (\it{ie} noise) than the general features of them (which are shared with the test dataset)
+  \end{block}
+
+  \begin{alertblock}{Causes}
+    Too many free parameters, too few different training samples
+  \end{alertblock}
+
+  \begin{exampleblock}{How to counter it?}
+    Regularization is kinda effective
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Issues}
+  \framesubtitle{Overfitting}
+  \begin{center}
+    \includegraphics[width=\linewidth]{resources/overfitting}
+  \end{center}
+  \captionof{figure}{Memorizing is not learning!}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Solutions}
+  \framesubtitle{Regularization}
+
+  \begin{block}{General idea}
+    Regularization: penalize the model when weights are high (decrease ``freedom'' of the model)
+  \end{block}
+
+  \begin{exampleblock}{Consequences}
+    \begin{itemize}
+      \item Counters overfitting (accuracy on test dataset will be closer to the accuracy on train dataset)
+      \item \alert{BUT} too much regularization can lead to \alert{underfitting}!
+    \end{itemize}
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Issues}
+  \framesubtitle{Underfitting}
+
+  \begin{block}{Description}
+    Underfitting: when there's not enough free parameters/freedom to learn the datasets (both training and testing)
+  \end{block}
+
+  \begin{exampleblock}{How to counter it?}
+    \begin{itemize}
+      \item Reduce regularization factor
+      \item Add parameters (extend the model)
+    \end{itemize}
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Issues}
+  \framesubtitle{Underfitting}
+  \begin{center}
+    \includegraphics[width=\linewidth]{resources/underfitting}
+  \end{center}
+  \captionof{figure}{Balance is the key here}
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btnt}
+  \framesubtitle{Training on HARD dataset (v4)}
+
+  Same architecture as v2, with regularization: \alert{L2(0.001)}
+
+  \begin{exampleblock}{Architecture (v4)}
+    2 \tt{Conv2D} (32 64) + 1 \tt{Dense} (512) \hfill \alert{L2(0.001)}
+  \end{exampleblock}
+
+  Good results: over \alert{89 \% acc} on test data after an hour of training, but \alert{underfitting}: acc on training dataset no longer improves (blocked at \alert{96 \% acc})
+
+  \medskip
+
+  Final score on test data: \alert{91 \% acc}
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btnt}
+  \framesubtitle{Training on HARD dataset (v5)}
+
+  Larger model than v4, with less regularization: \alert{L2(0.0005)}
+
+  \begin{exampleblock}{Architecture (v5)}
+    2 \tt{Conv2D} (64 128) + 1 \tt{Dense} (1024) \hfill \alert{L2(0.0005)}
+  \end{exampleblock}
+
+  Very good results: over \alert{91 \% acc} on test data after an hour of training!
+
+  \medskip
+
+  Final score on test data: \alert{93 \% acc}
+  \bigskip
+
+  Let's try adding \alert{more layers} now!
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btnt}
+  \framesubtitle{Training on HARD dataset (v6)}
+
+  One more conv layer than v5
+
+  \begin{exampleblock}{Architecture (v6)}
+    3 \tt{Conv2D} (32 64 128) + 1 \tt{Dense} (1024) \hfill \alert{L2(0.0005)}
+  \end{exampleblock}
+
+  Very good results: over \alert{95 \% acc} on test data after an hour of training!
+
+  \medskip
+
+  Final score on test data: \alert{96 \% acc}
+
+  \bigskip
+
+  One \alert{more layer}? Why not!
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btnt}
+  \framesubtitle{Training on HARD dataset (v7)}
+
+  One more conv layer than v6
+
+  \begin{exampleblock}{Architecture (v7)}
+    4 \tt{Conv2D} (16 32 64 128) + 1 \tt{Dense} (1024) \hfill \alert{L2(0.0005)}
+  \end{exampleblock}
+
+  Still very good results, but not improving\ldots{}
+
+  \medskip
+
+  Final score on test data: \alert{95 \% acc}
+
+  \bigskip
+
+  What should we do now?
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btnt}
+  \framesubtitle{Training in HARD dataset (v8 \& v9)}
+  \begin{exampleblock}{Architecture (v8) -- the stupid one}
+    4 \tt{Conv2D} (16 32 64 256) + 1 \tt{Dense} (2048) \hfill \alert{L2(0.0001)}
+  \end{exampleblock}
+  \alert{Overfitting} again, worse than v7 (not a good move\ldots{})
+
+  \bigskip
+
+  But the (final) v9 architecture gave the \alert{best results}!
+  \begin{itemize}
+    \item 2x more filters for each conv layer
+    \item same regularization as v7
+  \end{itemize}
+
+  \begin{exampleblock}{Architecture (v9)}
+    4 \tt{Conv2D} (32 64 128 256) + 1 \tt{Dense} (1024) \hfill \alert{L2(0.0005)}
+  \end{exampleblock}
+
+  Final results on test data: more than \alert{97 \% acc}!
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btnt}
+  \framesubtitle{Conclusions}
+  \begin{itemize}
+    \item The \alert{simplest} $\lto$ \alert{most complex} approach paid off
+    \item It was much easier to reason about the NN when the learning time was very short (with GPU)
+    \item Each model was trained about \alert{3 hours} (equiv. $\simeq$ 4 days on CPU)
+  \end{itemize}
+
+  \begin{block}{Key points}
+    \begin{itemize}
+      \item Learning can be disappointing at first (the 3 firsts epochs in my case), with just one class predicted for example
+      \item Computer can outperform Human on classification with a decent amount of learning
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{\btnt}
+  \framesubtitle{Bias towards test data}
+  \begin{block}{Problem}
+    Even if the model doesn't learn directly from the test dataset, the \tt{save\_best} approach introduces a sort of ``indirect learning'' from the test dataset
+  \end{block}
+
+  \begin{exampleblock}{Solution (not implemented here)}
+    Use a 3\tss{rd} dataset for the final comparison between models, called \alert{validation dataset}
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}
+  \frametitle{CNN IRL}
+  \framesubtitle{Real world examples and dataset augmentation}
+  The \alert{\btf} was useful because I had:
+  \begin{itemize}
+    \item a normalized dataset
+    \item as many samples as I wanted
+  \end{itemize}
+
+  But this is not often the case in real life examples
+
+  \begin{exampleblock}{Solution}
+    Use dataset augmentation, which generates new samples from the real ones, by rotating, resizing\ldots{}
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Credits}
+  \framesubtitle{Thanks for listening!}
+
+  \begin{block}{Sources}
+    \begin{itemize}
+      \item \url{https://oreil.ly/2TLLnUM}
+      \item \url{https://bit.ly/2F3exFV}
+      \item \url{https://bit.ly/2XSh5Pr}
+      \item \url{https://bit.ly/2Ces8to}
+      \item \url{https://bit.ly/2NWh0pA}
+      \item \url{https://bit.ly/2J8zOmA}
+      \item \url{https://bit.ly/2LsZNBM}
+      \item \url{https://bit.ly/2VUuK73}
+      \item \url{https://bit.ly/2UvlA0j}
+    \end{itemize}
+  \end{block}
 \end{frame}
 
 \end{document}

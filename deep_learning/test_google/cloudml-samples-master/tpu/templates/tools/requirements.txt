@@ -1,2 +1,0 @@
-PyYaml==3.12
-redbaron==0.8

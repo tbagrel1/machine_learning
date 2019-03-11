@@ -144,6 +144,7 @@ static PyObject* load_binpgm_cfunc(PyObject *self, PyObject *obj_image_path) {
     unsigned char* pixel_map = malloc(pixels_nb * sizeof(unsigned char));
     pixels_read = fread(
         pixel_map, sizeof(unsigned char), pixels_nb, image_file);
+    fclose(image_file);
 
     if (pixels_read != pixels_nb) {
         PyErr_SetString(PyExc_OSError, "Unable to read all pixels.");
